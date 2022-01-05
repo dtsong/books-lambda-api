@@ -7,12 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-// Declare a new DynamoDB instance. Safe for concurrent use.
-
-var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("us-west-2"))
+var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("us-east-1"))
 
 func getItem(isbn string) (*book, error) {
-	// Prepare the input for the query
 	input := &dynamodb.GetItemInput{
 		TableName: aws.String("Books"),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -22,21 +19,14 @@ func getItem(isbn string) (*book, error) {
 		},
 	}
 
-	// Get the item from DynamoDB, return nil if no match.
 	result, err := db.GetItem(input)
 	if err != nil {
 		return nil, err
 	}
-
 	if result.Item == nil {
 		return nil, nil
 	}
 
-	// The result.Item object returned has the underlying type
-	// map[string]*AttributeValue. We can use the UnmarshalMap helper
-	// to parse this straight into the fields of a struct. Note:
-	// UnmarshalListOfMaps also exists if you are working with multiple
-	// items
 	bk := new(book)
 	err = dynamodbattribute.UnmarshalMap(result.Item, bk)
 	if err != nil {
@@ -44,4 +34,25 @@ func getItem(isbn string) (*book, error) {
 	}
 
 	return bk, nil
+}
+
+// Add a book record to DynamoDB.
+func putItem(bk *book) error {
+	input := &dynamodb.PutItemInput{
+		TableName: aws.String("Books"),
+		Item: map[string]*dynamodb.AttributeValue{
+			"ISBN": {
+				S: aws.String(bk.ISBN),
+			},
+			"Title": {
+				S: aws.String(bk.Title),
+			},
+			"Author": {
+				S: aws.String(bk.Author),
+			},
+		},
+	}
+
+	_, err := db.PutItem(input)
+	return err
 }
