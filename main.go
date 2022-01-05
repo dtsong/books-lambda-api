@@ -11,10 +11,11 @@ type book struct {
 }
 
 func show() (*book, error) {
-	bk := &book{
-		ISBN:   "978-1420931693",
-		Title:  "The Republic",
-		Author: "Plato",
+	// Fetch a specific book record from the DynamoDB database. We'll
+	// make this more dynamic in the next section.
+	bk, err := getItem("978-0486298238")
+	if err != nil {
+		return nil, err
 	}
 
 	return bk, nil
